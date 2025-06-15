@@ -1,0 +1,12 @@
+/target
+Cargo.lock
+**/*.rs.bk
+*.pdf
+*.xyz
+*.bak
+.env
+.vscode/
+.idea/
+*.log
+tmp/
+.DS_Store
