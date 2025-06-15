@@ -1769,3 +1769,931 @@ impl QueueManager {
     }
 }
 
+//----------------------------------------
+// Stream Processing Types
+//----------------------------------------
+
+/// Core stream processor handling PDF streams
+#[derive(Debug)]
+pub struct StreamProcessor {
+    pub config: StreamConfig,
+    pub filters: HashMap<FilterType, Box<dyn StreamFilter>>,
+    pub buffer_pool: BufferPool,
+    pub metrics: StreamMetrics,
+}
+
+/// Stream processing configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamConfig {
+    pub buffer_size: ByteSize,
+    pub max_memory: ByteSize,
+    pub compression_level: CompressionLevel,
+    pub chunk_size: ByteSize,
+    pub parallel_processing: bool,
+    pub filter_options: FilterOptions,
+}
+
+/// Stream buffer pool
+#[derive(Debug)]
+pub struct BufferPool {
+    pub buffers: Vec<StreamBuffer>,
+    pub allocated: usize,
+    pub available: usize,
+    pub max_size: ByteSize,
+    pub stats: BufferStats,
+}
+
+/// Individual stream buffer
+#[derive(Debug)]
+pub struct StreamBuffer {
+    pub id: BufferId,
+    pub data: Vec<u8>,
+    pub capacity: ByteSize,
+    pub used: ByteSize,
+    pub flags: BufferFlags,
+    pub metadata: BufferMetadata,
+}
+
+/// Buffer flags
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BufferFlags {
+    pub readable: bool,
+    pub writable: bool,
+    pub resizable: bool,
+    pub secure: bool,
+    pub pinned: bool,
+}
+
+/// Stream filter types
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum FilterType {
+    // Standard PDF filters
+    ASCIIHexDecode,
+    ASCII85Decode,
+    LZWDecode,
+    FlateDecode,
+    RunLengthDecode,
+    CCITTFaxDecode,
+    JBIG2Decode,
+    DCTDecode,
+    JPXDecode,
+    
+    // Custom filters
+    Encryption,
+    Checksum,
+    Compression,
+    Custom(u8),
+}
+
+/// Filter parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterParams {
+    pub predictor: Option<Predictor>,
+    pub colors: Option<u8>,
+    pub bits_per_component: Option<u8>,
+    pub columns: Option<u32>,
+    pub rows: Option<u32>,
+    pub encoding: Option<Encoding>,
+    pub custom_params: HashMap<String, Value>,
+}
+
+/// Predictor types for filters
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Predictor {
+    None = 1,
+    TIFF = 2,
+    PNG_None = 10,
+    PNG_Sub = 11,
+    PNG_Up = 12,
+    PNG_Average = 13,
+    PNG_Paeth = 14,
+    PNG_Optimum = 15,
+}
+
+/// Stream chunk for processing
+#[derive(Debug, Clone)]
+pub struct StreamChunk {
+    pub data: Vec<u8>,
+    pub offset: u64,
+    pub size: usize,
+    pub filters: Vec<FilterType>,
+    pub params: Option<FilterParams>,
+    pub metadata: ChunkMetadata,
+}
+
+/// Stream processing metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamMetrics {
+    pub bytes_processed: u64,
+    pub chunks_processed: u64,
+    pub filter_timings: HashMap<FilterType, Duration>,
+    pub compression_ratio: f64,
+    pub error_count: u64,
+    pub buffer_usage: BufferUsage,
+}
+
+/// Stream processing errors
+#[derive(Debug, Error)]
+pub enum StreamError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
+    
+    #[error("Filter error: {0}")]
+    Filter(String),
+    
+    #[error("Buffer error: {0}")]
+    Buffer(String),
+    
+    #[error("Parameter error: {0}")]
+    Parameter(String),
+    
+    #[error("Memory error: {0}")]
+    Memory(String),
+}
+
+/// Stream encoder
+#[derive(Debug)]
+pub struct StreamEncoder {
+    pub filter_chain: Vec<FilterType>,
+    pub params: FilterParams,
+    pub buffer: StreamBuffer,
+    pub state: EncoderState,
+    pub stats: EncoderStats,
+}
+
+/// Stream decoder
+#[derive(Debug)]
+pub struct StreamDecoder {
+    pub filter_chain: Vec<FilterType>,
+    pub params: FilterParams,
+    pub buffer: StreamBuffer,
+    pub state: DecoderState,
+    pub stats: DecoderStats,
+}
+
+/// Compression levels
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum CompressionLevel {
+    None = 0,
+    Fastest = 1,
+    Fast = 3,
+    Default = 6,
+    High = 8,
+    Maximum = 9,
+}
+
+/// Stream iterator for chunk processing
+#[derive(Debug)]
+pub struct StreamIterator<'a> {
+    pub stream: &'a [u8],
+    pub chunk_size: usize,
+    pub position: usize,
+    pub filters: &'a [FilterType],
+    pub params: &'a FilterParams,
+}
+
+//----------------------------------------
+// Stream Processing Implementation
+//----------------------------------------
+
+impl StreamProcessor {
+    pub fn new(config: StreamConfig) -> Result<Self> {
+        // Initialize stream processor
+        todo!()
+    }
+
+    pub fn encode(&mut self, data: &[u8], filters: &[FilterType]) -> Result<Vec<u8>> {
+        // Encode data using filters
+        todo!()
+    }
+
+    pub fn decode(&mut self, data: &[u8], filters: &[FilterType]) -> Result<Vec<u8>> {
+        // Decode data using filters
+        todo!()
+    }
+
+    pub fn process_chunk(&mut self, chunk: StreamChunk) -> Result<StreamChunk> {
+        // Process individual chunk
+        todo!()
+    }
+}
+
+impl StreamBuffer {
+    pub fn new(capacity: ByteSize) -> Result<Self> {
+        // Create new stream buffer
+        todo!()
+    }
+
+    pub fn write(&mut self, data: &[u8]) -> Result<usize> {
+        // Write data to buffer
+        todo!()
+    }
+
+    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        // Read data from buffer
+        todo!()
+    }
+
+    pub fn clear(&mut self) {
+        // Clear buffer contents
+        todo!()
+    }
+}
+
+impl<'a> Iterator for StreamIterator<'a> {
+    type Item = Result<StreamChunk>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Get next chunk from stream
+        todo!()
+    }
+}
+
+//----------------------------------------
+// Filter Trait Implementations
+//----------------------------------------
+
+pub trait StreamFilter: Send + Sync {
+    fn filter_type(&self) -> FilterType;
+    fn encode(&self, data: &[u8], params: &FilterParams) -> Result<Vec<u8>>;
+    fn decode(&self, data: &[u8], params: &FilterParams) -> Result<Vec<u8>>;
+    fn update_params(&mut self, params: &FilterParams) -> Result<()>;
+}
+
+//----------------------------------------
+// Threading and Concurrency Types
+//----------------------------------------
+
+/// Core thread pool manager
+#[derive(Debug)]
+pub struct ThreadPool {
+    pub config: ThreadPoolConfig,
+    pub workers: Vec<Worker>,
+    pub task_queue: Arc<TaskQueue>,
+    pub metrics: ThreadPoolMetrics,
+    pub scheduler: TaskScheduler,
+}
+
+/// Thread pool configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThreadPoolConfig {
+    pub min_threads: usize,
+    pub max_threads: usize,
+    pub thread_ttl: Duration,
+    pub queue_size: usize,
+    pub priority_levels: usize,
+    pub stack_size: ByteSize,
+    pub thread_name_prefix: String,
+}
+
+/// Worker thread
+#[derive(Debug)]
+pub struct Worker {
+    pub id: WorkerId,
+    pub thread: Option<JoinHandle<()>>,
+    pub status: WorkerStatus,
+    pub stats: WorkerStats,
+    pub task_count: AtomicUsize,
+    pub last_active: AtomicU64,
+}
+
+/// Worker status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum WorkerStatus {
+    Idle,
+    Busy,
+    Stopping,
+    Stopped,
+    Panicked,
+}
+
+/// Task queue for managing work items
+#[derive(Debug)]
+pub struct TaskQueue {
+    pub queues: Vec<PriorityQueue<Task>>,
+    pub total_tasks: AtomicUsize,
+    pub waiting_tasks: AtomicUsize,
+    pub completed_tasks: AtomicUsize,
+    pub failed_tasks: AtomicUsize,
+}
+
+/// Task scheduler
+#[derive(Debug)]
+pub struct TaskScheduler {
+    pub strategy: SchedulingStrategy,
+    pub priorities: Vec<Priority>,
+    pub affinity_rules: Vec<AffinityRule>,
+    pub load_balancer: LoadBalancer,
+}
+
+/// Scheduling strategies
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SchedulingStrategy {
+    FIFO,
+    LIFO,
+    RoundRobin,
+    WeightedRoundRobin,
+    Priority,
+    Dynamic,
+}
+
+/// Task priority levels
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Priority {
+    Critical = 0,
+    High = 1,
+    Normal = 2,
+    Low = 3,
+    Background = 4,
+}
+
+/// Task definition
+#[derive(Debug)]
+pub struct Task {
+    pub id: TaskId,
+    pub priority: Priority,
+    pub function: Box<dyn FnOnce() -> Result<()> + Send + 'static>,
+    pub dependencies: Vec<TaskId>,
+    pub metadata: TaskMetadata,
+    pub stats: TaskStats,
+}
+
+/// Task metadata
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskMetadata {
+    pub name: String,
+    pub category: String,
+    pub created_at: DateTime<Utc>,
+    pub deadline: Option<DateTime<Utc>>,
+    pub retry_count: u32,
+    pub tags: HashSet<String>,
+}
+
+/// Task statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskStats {
+    pub queued_at: DateTime<Utc>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub execution_time: Option<Duration>,
+    pub retries: u32,
+    pub status: TaskStatus,
+}
+
+/// Task status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TaskStatus {
+    Queued,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+    TimedOut,
+}
+
+/// Thread pool metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThreadPoolMetrics {
+    pub active_threads: usize,
+    pub idle_threads: usize,
+    pub total_tasks_processed: u64,
+    pub tasks_in_queue: usize,
+    pub average_wait_time: Duration,
+    pub average_processing_time: Duration,
+    pub thread_utilization: f64,
+}
+
+/// Synchronization primitives
+#[derive(Debug)]
+pub enum SyncPrimitive {
+    Mutex(Arc<Mutex<()>>),
+    RwLock(Arc<RwLock<()>>),
+    Condvar(Arc<Condvar>),
+    Semaphore(Arc<Semaphore>),
+    Barrier(Arc<Barrier>),
+}
+
+/// Message types for thread communication
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ThreadMessage {
+    NewTask(Task),
+    Shutdown,
+    PauseWorker(WorkerId),
+    ResumeWorker(WorkerId),
+    UpdateConfig(ThreadPoolConfig),
+    RequestStatus,
+    Status(ThreadPoolStatus),
+}
+
+//----------------------------------------
+// Threading Implementation
+//----------------------------------------
+
+impl ThreadPool {
+    pub fn new(config: ThreadPoolConfig) -> Result<Self> {
+        // Initialize thread pool
+        todo!()
+    }
+
+    pub fn submit<F>(&self, task: F, priority: Priority) -> Result<TaskId> 
+    where
+        F: FnOnce() -> Result<()> + Send + 'static 
+    {
+        // Submit task to pool
+        todo!()
+    }
+
+    pub fn shutdown(&mut self) -> Result<()> {
+        // Shutdown thread pool
+        todo!()
+    }
+
+    pub fn scale(&mut self, new_size: usize) -> Result<()> {
+        // Scale thread pool
+        todo!()
+    }
+}
+
+impl Worker {
+    pub fn new(id: WorkerId, queue: Arc<TaskQueue>) -> Result<Self> {
+        // Initialize worker
+        todo!()
+    }
+
+    pub fn run(&mut self) -> Result<()> {
+        // Run worker loop
+        todo!()
+    }
+
+    pub fn stop(&mut self) -> Result<()> {
+        // Stop worker
+        todo!()
+    }
+}
+
+impl TaskQueue {
+    pub fn push(&self, task: Task) -> Result<()> {
+        // Push task to queue
+        todo!()
+    }
+
+    pub fn pop(&self) -> Option<Task> {
+        // Pop task from queue
+        todo!()
+    }
+
+    pub fn len(&self) -> usize {
+        self.total_tasks.load(Ordering::Relaxed)
+    }
+    }
+
+//----------------------------------------
+// System Operations Types
+//----------------------------------------
+
+/// Core system operations manager
+#[derive(Debug)]
+pub struct SystemManager {
+    pub config: SystemConfig,
+    pub file_manager: FileManager,
+    pub process_manager: ProcessManager,
+    pub network_manager: NetworkManager,
+    pub resource_manager: ResourceManager,
+    pub metrics: SystemMetrics,
+}
+
+/// System configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemConfig {
+    pub max_file_handles: usize,
+    pub max_processes: usize,
+    pub network_timeout: Duration,
+    pub temp_directory: PathBuf,
+    pub resource_limits: ResourceLimits,
+    pub security_policy: SecurityPolicy,
+}
+
+/// File operations manager
+#[derive(Debug)]
+pub struct FileManager {
+    pub handles: HashMap<FileId, FileHandle>,
+    pub watchers: Vec<FileWatcher>,
+    pub cache: FileCache,
+    pub stats: FileStats,
+}
+
+/// File handle
+#[derive(Debug)]
+pub struct FileHandle {
+    pub id: FileId,
+    pub path: PathBuf,
+    pub mode: FileMode,
+    pub flags: FileFlags,
+    pub metadata: FileMetadata,
+    pub status: FileStatus,
+}
+
+/// File modes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct FileMode {
+    pub read: bool,
+    pub write: bool,
+    pub append: bool,
+    pub create: bool,
+    pub truncate: bool,
+    pub exclusive: bool,
+}
+
+/// File status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum FileStatus {
+    Open,
+    Closed,
+    Locked,
+    Error,
+}
+
+/// Process manager
+#[derive(Debug)]
+pub struct ProcessManager {
+    pub processes: HashMap<ProcessId, ProcessHandle>,
+    pub environment: Environment,
+    pub limits: ProcessLimits,
+    pub stats: ProcessStats,
+}
+
+/// Process handle
+#[derive(Debug)]
+pub struct ProcessHandle {
+    pub id: ProcessId,
+    pub name: String,
+    pub command: String,
+    pub args: Vec<String>,
+    pub environment: Environment,
+    pub status: ProcessStatus,
+    pub resources: ProcessResources,
+}
+
+/// Process status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ProcessStatus {
+    Starting,
+    Running,
+    Stopping,
+    Stopped,
+    Failed,
+}
+
+/// Network operations manager
+#[derive(Debug)]
+pub struct NetworkManager {
+    pub connections: HashMap<ConnectionId, Connection>,
+    pub listeners: Vec<Listener>,
+    pub protocols: SupportedProtocols,
+    pub stats: NetworkStats,
+}
+
+/// Network connection
+#[derive(Debug)]
+pub struct Connection {
+    pub id: ConnectionId,
+    pub protocol: Protocol,
+    pub local_addr: SocketAddr,
+    pub remote_addr: SocketAddr,
+    pub status: ConnectionStatus,
+    pub stats: ConnectionStats,
+}
+
+/// Network protocols
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Protocol {
+    TCP,
+    UDP,
+    TLS,
+    HTTP,
+    HTTPS,
+    Custom(u16),
+}
+
+/// Resource manager
+#[derive(Debug)]
+pub struct ResourceManager {
+    pub allocations: HashMap<ResourceId, Resource>,
+    pub quotas: ResourceQuotas,
+    pub monitors: Vec<ResourceMonitor>,
+    pub stats: ResourceStats,
+}
+
+/// Resource types
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Resource {
+    Memory(MemoryResource),
+    CPU(CPUResource),
+    Storage(StorageResource),
+    Network(NetworkResource),
+    Custom(CustomResource),
+}
+
+/// System metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemMetrics {
+    pub cpu_usage: f64,
+    pub memory_usage: ByteSize,
+    pub disk_usage: HashMap<PathBuf, DiskUsage>,
+    pub network_usage: NetworkUsage,
+    pub process_count: usize,
+    pub file_handles: usize,
+    pub uptime: Duration,
+}
+
+//----------------------------------------
+// System Operations Implementation
+//----------------------------------------
+
+impl SystemManager {
+    pub fn new(config: SystemConfig) -> Result<Self> {
+        // Initialize system manager
+        todo!()
+    }
+
+    pub fn start(&mut self) -> Result<()> {
+        // Start system services
+        todo!()
+    }
+
+    pub fn stop(&mut self) -> Result<()> {
+        // Stop system services
+        todo!()
+    }
+
+    pub fn monitor_resources(&self) -> Result<SystemMetrics> {
+        // Monitor system resources
+        todo!()
+    }
+}
+
+impl FileManager {
+    pub fn open(&mut self, path: &Path, mode: FileMode) -> Result<FileHandle> {
+        // Open file
+        todo!()
+    }
+
+    pub fn close(&mut self, handle: &FileHandle) -> Result<()> {
+        // Close file
+        todo!()
+    }
+
+    pub fn watch(&mut self, path: &Path) -> Result<FileWatcher> {
+        // Watch file/directory
+        todo!()
+    }
+}
+
+impl ProcessManager {
+    pub fn spawn(&mut self, command: &str, args: &[String]) -> Result<ProcessHandle> {
+        // Spawn new process
+        todo!()
+    }
+
+    pub fn kill(&mut self, id: ProcessId) -> Result<()> {
+        // Kill process
+        todo!()
+    }
+
+    pub fn wait(&mut self, id: ProcessId) -> Result<ExitStatus> {
+        // Wait for process
+        todo!()
+    }
+}
+
+impl NetworkManager {
+    pub fn connect(&mut self, addr: SocketAddr, protocol: Protocol) -> Result<Connection> {
+        // Create network connection
+        todo!()
+    }
+
+    pub fn listen(&mut self, addr: SocketAddr, protocol: Protocol) -> Result<Listener> {
+        // Create network listener
+        todo!()
+    }
+
+    pub fn close(&mut self, id: ConnectionId) -> Result<()> {
+        // Close connection
+        todo!()
+    }
+}
+
+//----------------------------------------
+// Final Utility Types & Traits
+//----------------------------------------
+
+/// Result type alias for the crate
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Generic byte size for memory measurements
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct ByteSize(pub u64);
+
+impl ByteSize {
+    pub const fn bytes(bytes: u64) -> Self {
+        ByteSize(bytes)
+    }
+
+    pub const fn kb(kb: u64) -> Self {
+        ByteSize(kb * 1024)
+    }
+
+    pub const fn mb(mb: u64) -> Self {
+        ByteSize(mb * 1024 * 1024)
+    }
+
+    pub const fn gb(gb: u64) -> Self {
+        ByteSize(gb * 1024 * 1024 * 1024)
+    }
+}
+
+/// Unique identifiers for various entities
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Id<T>(pub Uuid, std::marker::PhantomData<T>);
+
+pub type TaskId = Id<Task>;
+pub type WorkerId = Id<Worker>;
+pub type FileId = Id<FileHandle>;
+pub type ProcessId = Id<ProcessHandle>;
+pub type ConnectionId = Id<Connection>;
+pub type ResourceId = Id<Resource>;
+pub type BufferId = Id<StreamBuffer>;
+pub type ChainId = Id<EvidenceChain>;
+pub type FindingId = Id<Finding>;
+pub type ReportId = Id<ForensicsReport>;
+pub type KeyId = Id<ProtectedKey>;
+
+/// Version information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Version {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+    pub pre: Option<String>,
+    pub build: Option<String>,
+}
+
+impl Version {
+    pub fn new(major: u32, minor: u32, patch: u32) -> Self {
+        Version {
+            major,
+            minor,
+            patch,
+            pre: None,
+            build: None,
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!("{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
+/// Core traits for type validation and conversion
+pub trait Validate {
+    fn validate(&self) -> Result<()>;
+}
+
+pub trait ToBytes {
+    fn to_bytes(&self) -> Result<Vec<u8>>;
+}
+
+pub trait FromBytes: Sized {
+    fn from_bytes(bytes: &[u8]) -> Result<Self>;
+}
+
+pub trait SecureClear {
+    fn clear(&mut self);
+}
+
+/// Helper traits for common operations
+pub trait Identifiable {
+    type Id;
+    fn id(&self) -> Self::Id;
+}
+
+pub trait Timestamped {
+    fn timestamp(&self) -> DateTime<Utc>;
+}
+
+pub trait Stateful {
+    type Status;
+    fn status(&self) -> Self::Status;
+}
+
+pub trait Measurable {
+    type Metric;
+    fn metrics(&self) -> Self::Metric;
+}
+
+/// Common utility functions
+pub mod utils {
+    use super::*;
+
+    pub fn current_timestamp() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    pub fn generate_id<T>() -> Id<T> {
+        Id(Uuid::new_v4(), std::marker::PhantomData)
+    }
+
+    pub fn hash_bytes(data: &[u8]) -> Hash {
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        hasher.finalize().into()
+    }
+
+    pub fn secure_random_bytes(len: usize) -> Result<Vec<u8>> {
+        let mut bytes = vec![0u8; len];
+        getrandom::getrandom(&mut bytes)?;
+        Ok(bytes)
+    }
+}
+
+/// Error handling improvements
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Io(e) => write!(f, "IO error: {}", e),
+            Error::Pdf(e) => write!(f, "PDF error: {}", e),
+            Error::Security(e) => write!(f, "Security error: {}", e),
+            Error::Forensic(e) => write!(f, "Forensic error: {}", e),
+            Error::Memory(e) => write!(f, "Memory error: {}", e),
+            Error::System(e) => write!(f, "System error: {}", e),
+            Error::Config(e) => write!(f, "Configuration error: {}", e),
+            Error::Validation(e) => write!(f, "Validation error: {}", e),
+            Error::Other(e) => write!(f, "Other error: {}", e),
+        }
+    }
+}
+
+/// Common implementations
+impl<T> Id<T> {
+    pub fn new() -> Self {
+        Id(Uuid::new_v4(), std::marker::PhantomData)
+    }
+}
+
+impl<T: SecureClear> SecureClear for Vec<T> {
+    fn clear(&mut self) {
+        for item in self {
+            item.clear();
+        }
+        self.clear();
+    }
+}
+
+impl<K, V: SecureClear> SecureClear for HashMap<K, V> {
+    fn clear(&mut self) {
+        for (_, value) in self.drain() {
+            let mut value = value;
+            value.clear();
+        }
+    }
+}
+
+//----------------------------------------
+// Module organization
+//----------------------------------------
+
+pub mod core {
+    pub use super::{Result, Error, Version, ByteSize};
+    pub use super::{Validate, ToBytes, FromBytes, SecureClear};
+    pub use super::{Identifiable, Timestamped, Stateful, Measurable};
+}
+
+pub mod memory {
+    pub use super::{MemoryManager, MemoryConfig, MemoryAllocations};
+    pub use super::{MemoryBlock, MemoryPool, MemoryStats};
+}
+
+pub mod security {
+    pub use super::{SecurityManager, SecurityConfig, CryptoManager};
+    pub use super::{KeyStore, ProtectedKey, Certificate, DigitalSignature};
+}
+
+pub mod forensics {
+    pub use super::{ForensicsManager, ForensicsConfig, EvidenceStore};
+    pub use super::{Evidence, EvidenceChain, ForensicsReport};
+}
+
+pub mod stream {
+    pub use super::{StreamProcessor, StreamConfig, StreamBuffer};
+    pub use super::{FilterType, FilterParams, StreamChunk};
+}
+
+pub mod threading {
+    pub use super::{ThreadPool, ThreadPoolConfig, Worker};
+    pub use super::{Task, TaskQueue, TaskScheduler};
+}
+
+pub mod system {
+    pub use super::{SystemManager, SystemConfig, FileManager};
+    pub use super::{ProcessManager, NetworkManager, ResourceManager};
+}
